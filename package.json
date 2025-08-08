@@ -1,0 +1,41 @@
+{
+  "name": "stickybar",
+  "version": "0.1.0",
+  "description": "Sticky vertical app launcher and tools for macOS",
+  "private": true,
+  "main": "src/main.js",
+  "author": "StickyBar",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "pack": "electron-builder --mac dir",
+    "dist": "electron-builder --mac dmg"
+  },
+  "dependencies": {
+    "electron-store": "8.1.0"
+  },
+  "devDependencies": {
+    "electron": "37.2.6",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.stickybar.app",
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build"
+    }
+  }
+}
