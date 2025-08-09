@@ -291,3 +291,62 @@ ipcMain.on("reload-main-window", () => {
     mainWindow.reload();
   }
 });
+
+let groupPopoutWindow = null;
+
+ipcMain.on("show-group-popout", (_evt, { groupId, buttonPosition, apps }) => {
+  if (groupPopoutWindow) {
+    groupPopoutWindow.close();
+  }
+
+  const side = store.get("side");
+  const width = store.get("width");
+  const popoutWidth = Math.max(200, apps.length * 48 + 32);
+
+  let x, y;
+  if (side === "left") {
+    x = width + 8;
+  } else {
+    x = -popoutWidth - 8;
+  }
+  y = buttonPosition.top;
+
+  groupPopoutWindow = new BrowserWindow({
+    x,
+    y,
+    width: popoutWidth,
+    height: 64,
+    frame: false,
+    alwaysOnTop: true,
+    transparent: true,
+    vibrancy: "sidebar",
+    visualEffectState: "active",
+    resizable: false,
+    movable: false,
+    focusable: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+    },
+  });
+
+  groupPopoutWindow.loadFile(
+    path.join(__dirname, "renderer", "group-popout.html"),
+    {
+      query: { groupId, apps: JSON.stringify(apps) },
+    }
+  );
+
+  groupPopoutWindow.on("closed", () => {
+    groupPopoutWindow = null;
+  });
+});
+
+ipcMain.on("hide-group-popout", () => {
+  if (groupPopoutWindow) {
+    groupPopoutWindow.close();
+    groupPopoutWindow = null;
+  }
+});

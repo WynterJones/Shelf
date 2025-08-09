@@ -16,4 +16,6 @@ contextBridge.exposeInMainWorld("sticky", {
   addGroup: (group) => ipcRenderer.send("add-group", group),
   deleteGroup: (index) => ipcRenderer.send("delete-group", index),
   reloadMainWindow: () => ipcRenderer.send("reload-main-window"),
+  showGroupPopout: (data) => ipcRenderer.send("show-group-popout", data),
+  hideGroupPopout: () => ipcRenderer.send("hide-group-popout"),
 });

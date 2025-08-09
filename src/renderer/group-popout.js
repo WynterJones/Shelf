@@ -1,10 +1,3 @@
-const state = {
-  side: "left",
-  width: 90,
-  apps: [],
-  groups: [],
-};
-
 function h(tag, props = {}, children = []) {
   const el = document.createElement(tag);
   Object.entries(props).forEach(([k, v]) => {
@@ -72,16 +65,16 @@ function icon(type = "circle", isImage = false) {
     const img = document.createElement("img");
     img.src = type;
     img.className = "icon icon-image";
-    img.style.width = "24px";
-    img.style.height = "24px";
+    img.style.width = "20px";
+    img.style.height = "20px";
     img.style.borderRadius = "4px";
     img.style.objectFit = "cover";
     return img;
   }
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "24");
-  svg.setAttribute("height", "24");
+  svg.setAttribute("width", "20");
+  svg.setAttribute("height", "20");
   svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("fill", "none");
   svg.setAttribute("stroke", "currentColor");
@@ -98,136 +91,35 @@ function icon(type = "circle", isImage = false) {
   return svg;
 }
 
-function setSide(nextSide) {
-  state.side = nextSide;
-  window.sticky.setSide(nextSide);
-}
+function init() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const groupId = urlParams.get("groupId");
+  const apps = JSON.parse(urlParams.get("apps") || "[]");
 
-function openApp(appPath) {
-  window.sticky.openApp(appPath);
-}
+  const root = document.getElementById("group-popout-root");
 
-function renderToolbar() {
-  const buttons = [];
-
-  state.apps.forEach((app) => {
-    if (app.groupId) return;
-
-    const isImage =
-      app.icon &&
-      (app.icon.startsWith("http") ||
-        app.icon.startsWith("data:") ||
-        app.icon.startsWith("file:"));
-
-    buttons.push(
-      h("div", { class: "button-container" }, [
-        h(
-          "button",
-          {
-            class: "button",
-            title: app.name,
-            onClick: () => openApp(app.path),
-          },
-          [icon(app.icon || "circle", isImage)]
-        ),
-        h("div", { class: "label", text: app.name }),
-      ])
-    );
-  });
-
-  state.groups.forEach((group) => {
-    const groupApps = state.apps.filter((app) => app.groupId === group.id);
-    if (groupApps.length === 0) return;
-
-    buttons.push(
-      h("div", { class: "button-container group-container" }, [
-        h(
-          "button",
-          {
-            class: "button group-button",
-            title: group.name,
-            onMouseenter: (e) => showGroupPopout(e, group.id, groupApps),
-            onMouseleave: () => hideGroupPopout(),
-          },
-          [icon("star")]
-        ),
-        h("div", { class: "label", text: group.name }),
-      ])
-    );
-  });
-
-  const toolButtons = [{ id: "settings", label: "Settings" }];
-
-  toolButtons.forEach((t) => {
-    buttons.push(
-      h("div", { class: "button-container" }, [
-        h(
-          "button",
-          {
-            class: "button",
-            title: t.label,
-            onClick: () => window.sticky.openPanel(t.id),
-          },
-          [icon("settings")]
-        ),
-        h("div", { class: "label", text: t.label }),
-      ])
-    );
-  });
-
-  buttons.push(h("div", { class: "spacer" }));
-
-  buttons.push(
-    h("div", { class: "button-container align-container" }, [
-      h(
+  const container = h(
+    "div",
+    { class: "group-popout-container" },
+    apps.map((app) => {
+      const isImage =
+        app.icon &&
+        (app.icon.startsWith("http") ||
+          app.icon.startsWith("data:") ||
+          app.icon.startsWith("file:"));
+      return h(
         "button",
         {
-          class: "button align-button",
-          title: "Align Window",
-          onClick: () => window.sticky.alignActiveWindow(),
+          class: "group-app-button",
+          title: app.name,
+          onClick: () => window.sticky.openApp(app.path),
         },
-        [icon("expand")]
-      ),
-    ])
+        [icon(app.icon || "circle", isImage)]
+      );
+    })
   );
 
-  return h("div", { class: "toolbar" }, buttons);
-}
-
-function showGroupPopout(event, groupId, groupApps) {
-  const button = event.target.closest(".button-container");
-  const buttonRect = button.getBoundingClientRect();
-
-  window.sticky.showGroupPopout({
-    groupId,
-    buttonPosition: {
-      top: buttonRect.top,
-      left: buttonRect.left,
-      width: buttonRect.width,
-      height: buttonRect.height,
-    },
-    apps: groupApps,
-  });
-}
-
-function hideGroupPopout() {
-  window.sticky.hideGroupPopout();
-}
-
-function render() {
-  const root = document.getElementById("root");
-  root.innerHTML = "";
-  root.appendChild(renderToolbar());
-  document.body.style.width = state.width + "px";
-}
-
-async function init() {
-  const initState = await window.sticky.getInitialState();
-  state.side = initState.side;
-  state.width = initState.width;
-  state.apps = initState.apps;
-  state.groups = initState.groups || [];
-  render();
+  root.appendChild(container);
 }
 
 init();

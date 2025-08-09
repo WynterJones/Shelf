@@ -23,11 +23,10 @@ body {
 
 #root {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-app-region: drag;
   background: var(--bg);
@@ -35,6 +34,7 @@ body {
 
 .toolbar {
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -93,30 +93,6 @@ body {
 
 .align-button:hover {
   opacity: 0.8;
-}
-
-.group-container {
-  position: relative;
-}
-
-.group-popout {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  margin-left: 8px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 8px;
-  display: none;
-  flex-direction: row;
-  gap: 4px;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.group-popout.visible {
-  display: flex;
 }
 
 .group-app-button {
@@ -182,6 +158,21 @@ body {
 
 .save-btn {
   font-weight: 600;
+}
+
+.group-popout-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .icon {
