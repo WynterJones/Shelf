@@ -107,15 +107,18 @@ function init() {
         (app.icon.startsWith("http") ||
           app.icon.startsWith("data:") ||
           app.icon.startsWith("file:"));
-      return h(
-        "button",
-        {
-          class: "group-app-button",
-          title: app.name,
-          onClick: () => window.sticky.openApp(app.path),
-        },
-        [icon(app.icon || "circle", isImage)]
-      );
+      return h("div", { class: "group-app-item" }, [
+        h(
+          "button",
+          {
+            class: "group-app-button",
+            title: app.name,
+            onClick: () => window.sticky.openApp(app.path),
+          },
+          [icon(app.icon || "circle", isImage)]
+        ),
+        h("div", { class: "group-app-label", text: app.name }),
+      ]);
     })
   );
 

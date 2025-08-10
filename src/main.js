@@ -176,24 +176,25 @@ ipcMain.on("align-active-window", () => {
   const width = store.get("width");
   const wa = getDisplayWorkArea();
 
-  const script =
-    side === "left"
-      ? `tell application "System Events"
-          tell process 1 whose frontmost is true
-            set position of window 1 to {${width}, 0}
-            set size of window 1 to {${wa.width - width}, ${wa.height}}
-          end tell
-        end tell`
-      : `tell application "System Events"
-          tell process 1 whose frontmost is true
-            set position of window 1 to {0, 0}
-            set size of window 1 to {${wa.width - width}, ${wa.height}}
-          end tell
-        end tell`;
+  const leftInset = side === "left" ? width : 0;
+  const targetWidth = wa.width - width;
+  const targetHeight = wa.height;
 
-  exec(`osascript -e '${script}'`, (error) => {
-    if (error) console.error("AppleScript error:", error);
-  });
+  const script = `tell application "System Events"
+    tell (first process whose frontmost is true)
+      if (count of windows) > 0 then
+        set position of window 1 to {${leftInset}, 0}
+        set size of window 1 to {${targetWidth}, ${targetHeight}}
+      end if
+    end tell
+  end tell`;
+
+  if (mainWindow) mainWindow.blur();
+  setTimeout(() => {
+    exec(`osascript -e '${script}'`, (error) => {
+      if (error) console.error("AppleScript error:", error);
+    });
+  }, 150);
 });
 
 ipcMain.on("open-panel", (_evt, id) => {
@@ -293,29 +294,44 @@ ipcMain.on("reload-main-window", () => {
 });
 
 let groupPopoutWindow = null;
+let groupPopoutGroupId = null;
 
 ipcMain.on("show-group-popout", (_evt, { groupId, buttonPosition, apps }) => {
-  if (groupPopoutWindow) {
+  if (groupPopoutWindow && !groupPopoutWindow.isDestroyed()) {
+    if (groupPopoutGroupId === groupId) {
+      groupPopoutWindow.close();
+      groupPopoutWindow = null;
+      groupPopoutGroupId = null;
+      return;
+    }
     groupPopoutWindow.close();
+    groupPopoutWindow = null;
+    groupPopoutGroupId = null;
   }
 
-  const side = store.get("side");
-  const width = store.get("width");
-  const popoutWidth = Math.max(200, apps.length * 48 + 32);
+  const popoutWidth = Math.min(600, Math.max(200, apps.length * 60 + 32));
+  const popoutHeight = 80;
 
-  let x, y;
-  if (side === "left") {
-    x = width + 8;
-  } else {
-    x = -popoutWidth - 8;
-  }
-  y = buttonPosition.top;
+  const mainWindowBounds = mainWindow.getBounds();
+
+  const x = Math.round(mainWindowBounds.x + 70);
+  const y = Math.round(mainWindowBounds.y + buttonPosition.top);
+
+  console.log("Positioning popout:", {
+    mainWindowBounds,
+    buttonPosition,
+    calculatedX: x,
+    calculatedY: y,
+    popoutWidth,
+    popoutHeight,
+  });
 
   groupPopoutWindow = new BrowserWindow({
     x,
     y,
     width: popoutWidth,
-    height: 64,
+    height: popoutHeight,
+    useContentSize: true,
     frame: false,
     alwaysOnTop: true,
     transparent: true,
@@ -323,7 +339,12 @@ ipcMain.on("show-group-popout", (_evt, { groupId, buttonPosition, apps }) => {
     visualEffectState: "active",
     resizable: false,
     movable: false,
-    focusable: false,
+    focusable: true,
+    show: false,
+    center: false,
+    skipTaskbar: true,
+    parent: mainWindow,
+    modal: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
@@ -332,6 +353,11 @@ ipcMain.on("show-group-popout", (_evt, { groupId, buttonPosition, apps }) => {
     },
   });
 
+  groupPopoutWindow.setBounds(
+    { x, y, width: popoutWidth, height: popoutHeight },
+    false
+  );
+
   groupPopoutWindow.loadFile(
     path.join(__dirname, "renderer", "group-popout.html"),
     {
@@ -339,14 +365,26 @@ ipcMain.on("show-group-popout", (_evt, { groupId, buttonPosition, apps }) => {
     }
   );
 
+  groupPopoutWindow.once("ready-to-show", () => {
+    groupPopoutWindow.setBounds(
+      { x, y, width: popoutWidth, height: popoutHeight },
+      false
+    );
+    groupPopoutWindow.show();
+  });
+
+  groupPopoutGroupId = groupId;
+
   groupPopoutWindow.on("closed", () => {
     groupPopoutWindow = null;
+    groupPopoutGroupId = null;
   });
 });
 
 ipcMain.on("hide-group-popout", () => {
-  if (groupPopoutWindow) {
+  if (groupPopoutWindow && !groupPopoutWindow.isDestroyed()) {
     groupPopoutWindow.close();
     groupPopoutWindow = null;
+    groupPopoutGroupId = null;
   }
 });

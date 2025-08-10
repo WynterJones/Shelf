@@ -146,8 +146,7 @@ function renderToolbar() {
           {
             class: "button group-button",
             title: group.name,
-            onMouseenter: (e) => showGroupPopout(e, group.id, groupApps),
-            onMouseleave: () => hideGroupPopout(),
+            onClick: (e) => showGroupPopout(e, group.id, groupApps),
           },
           [icon("star")]
         ),
@@ -198,13 +197,26 @@ function showGroupPopout(event, groupId, groupApps) {
   const button = event.target.closest(".button-container");
   const buttonRect = button.getBoundingClientRect();
 
+  console.log({
+    top: buttonRect.top,
+    left: buttonRect.left,
+    right: buttonRect.right,
+    bottom: buttonRect.bottom,
+    width: buttonRect.width,
+    height: buttonRect.height,
+    centerY: buttonRect.top + buttonRect.height / 2,
+  });
+
   window.sticky.showGroupPopout({
     groupId,
     buttonPosition: {
       top: buttonRect.top,
       left: buttonRect.left,
+      right: buttonRect.right,
+      bottom: buttonRect.bottom,
       width: buttonRect.width,
       height: buttonRect.height,
+      centerY: buttonRect.top + buttonRect.height / 2,
     },
     apps: groupApps,
   });
